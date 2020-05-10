@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import com.algaworks.algafood.modelo.Cliente;
 
 @Component
-public class NotificadorEmail {
+public class NotificadorEmail implements Notificador {
 	
 	public NotificadorEmail() {
 		
@@ -13,6 +13,7 @@ public class NotificadorEmail {
 		
 	}
 	
+	@Override
 	public void notificar(Cliente cliente, String mensagem) {
 		
 		System.out.printf("Notificando %s através do e-mail %s: %s\n",
