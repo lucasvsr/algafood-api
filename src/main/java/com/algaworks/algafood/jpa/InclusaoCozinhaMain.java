@@ -7,7 +7,7 @@ import org.springframework.context.ApplicationContext;
 import com.algaworks.algafood.AlgafoodApiApplication;
 import com.algaworks.algafood.domain.model.Cozinha;
 
-public class InclusãoCozinhaMain {
+public class InclusaoCozinhaMain {
 	
 	public static void main(String[] args) {
 		
@@ -20,7 +20,7 @@ public class InclusãoCozinhaMain {
 				
 				cozinha.setNome("Nordestina");
 		
-		System.out.println(cadastroCozinha.adicionar(cozinha).getNome());
+		System.out.println(cadastroCozinha.salvar(cozinha).getNome());
 		
 	}
 
