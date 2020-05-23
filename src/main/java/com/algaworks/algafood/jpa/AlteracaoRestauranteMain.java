@@ -5,10 +5,10 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ApplicationContext;
 
 import com.algaworks.algafood.AlgafoodApiApplication;
-import com.algaworks.algafood.domain.model.Cozinha;
-import com.algaworks.algafood.domain.repository.CozinhaRepository;
+import com.algaworks.algafood.domain.model.Restaurante;
+import com.algaworks.algafood.domain.repository.RestauranteRepository;
 
-public class ExclusaoCozinhaMain {
+public class AlteracaoRestauranteMain {
 	
 	public static void main(String[] args) {
 		
@@ -16,13 +16,18 @@ public class ExclusaoCozinhaMain {
 				.web(WebApplicationType.NONE)
 				.run(args);
 		
-		CozinhaRepository repository = applicationContext.getBean(CozinhaRepository.class);
+		RestauranteRepository repository = applicationContext.getBean(RestauranteRepository.class);
 		
 		
-		Cozinha entidade = repository.buscar(1L);
+		Restaurante entidade = repository.buscar(1L);
 		
-		repository.remover(entidade);
+		System.out.println(entidade.getNome());
 		
+				entidade.setNome("Manacá Grill");
+		
+		repository.adicionar(entidade);
+		
+		System.out.println((entidade).getNome());
 		
 	}
 
