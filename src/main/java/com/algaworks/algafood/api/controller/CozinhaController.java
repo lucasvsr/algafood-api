@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.algaworks.algafood.domain.exception.EntidadeEmUsoException;
+import com.algaworks.algafood.domain.exception.EntidadeNaoEncontradaException;
 import com.algaworks.algafood.domain.model.Cozinha;
 import com.algaworks.algafood.domain.repository.CozinhaRepository;
 import com.algaworks.algafood.domain.service.CadastroCozinhaService;
-import com.algaworks.algafood.domain.service.EntidadeNaoEncontradaException;
 
 @RestController //Esta anotação é a junção de @Controller e @ResponseBody
 @RequestMapping(value = "/cozinhas")

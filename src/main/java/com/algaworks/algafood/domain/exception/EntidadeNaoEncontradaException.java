@@ -1,4 +1,4 @@
-package com.algaworks.algafood.domain.service;
+package com.algaworks.algafood.domain.exception;
 
 public class EntidadeNaoEncontradaException extends RuntimeException {
 
