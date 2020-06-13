@@ -10,8 +10,8 @@ public interface RestauranteRepository {
 	
 	Restaurante buscar(Long id);
 	
-	Restaurante adicionar(Restaurante cozinha);
+	Restaurante adicionar(Restaurante entidade);
 	
-	void remover(Restaurante cozinha);
+	void remover(Restaurante entidade);
 
 }

@@ -9,6 +9,7 @@ import javax.persistence.Id;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+//@JsonRootName("cozinha") //PERMITE ALTERAR O NOME DO OBJETO XML QUANDO USAMOS ESSA REPRESENTAÇÃO NO SERVIÇO REST
 @Entity
 @Data // LOMBOK: Serve para criar automáticamente os getters, setters, toString, equals e hashcode
 @EqualsAndHashCode(onlyExplicitlyIncluded = true) //ao colocar esta tag, sobrescrevemos o @Data para deixar claro quais atributos vamos usar para a geração desses dois métodos
