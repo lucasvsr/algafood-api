@@ -13,57 +13,74 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.algaworks.algafood.domain.exception.CidadeJaCadastradaException;
+import com.algaworks.algafood.domain.exception.CidadeSemEstadoException;
 import com.algaworks.algafood.domain.exception.EntidadeEmUsoException;
 import com.algaworks.algafood.domain.exception.EntidadeNaoEncontradaException;
-import com.algaworks.algafood.domain.exception.EstadoJaCadastradoException;
-import com.algaworks.algafood.domain.model.Estado;
-import com.algaworks.algafood.domain.repository.EstadoRepository;
-import com.algaworks.algafood.domain.service.CadastroEstadoService;
+import com.algaworks.algafood.domain.model.Cidade;
+import com.algaworks.algafood.domain.repository.CidadeRepository;
+import com.algaworks.algafood.domain.service.CadastroCidadeService;
 
-@RestController // Esta anotação é a junção de @Controller e @ResponseBody
-@RequestMapping("/estados")
-public class EstadoController {
-
+@RestController //Esta anotação é a junção de @Controller e @ResponseBody
+@RequestMapping(value = "/cidades")
+public class CidadeController {
+	
 	@Autowired
-	private EstadoRepository repository;
-
+	private CidadeRepository repository;
+	
 	@Autowired
-	private CadastroEstadoService service;
-
+	private CadastroCidadeService service;
+	
 	@GetMapping
-	public List<Estado> listar() {
-
+	@ResponseStatus(HttpStatus.OK)
+	public List<Cidade> listar() {
+		
 		return repository.listar();
-
+		
 	}
-
+	
 	@PostMapping
-	public ResponseEntity<?> adicionar(@RequestBody Estado estado) {
-
+	public ResponseEntity<?> adicionar(@RequestBody Cidade cidade) {
+		
 		try {
 
-			return ResponseEntity.status(HttpStatus.CREATED).body(service.adicionar(estado));
+			return ResponseEntity.status(HttpStatus.CREATED).body(service.adicionar(cidade));
 
-		} catch (EstadoJaCadastradoException e) {
+		} catch (CidadeJaCadastradaException e) {
 
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 
 		}
-
+		
 	}
-
+	
 	@PutMapping("/{id}")
-	public ResponseEntity<Estado> atualizar(@PathVariable Long id, @RequestBody Estado atualizado) {
+	public ResponseEntity<?> atualizar(@PathVariable Long id, @RequestBody Cidade atualizada) {
 
-		Estado atual = repository.buscar(id);
+		Cidade atual = repository.buscar(id);
 
 		if (atual != null) {
 
-			BeanUtils.copyProperties(atualizado, atual, "id");
-
-			return ResponseEntity.ok(service.adicionar(atual));
+			BeanUtils.copyProperties(atualizada, atual, "id");
+			
+			try {
+				
+				return ResponseEntity.ok(service.adicionar(atual));
+				
+			} catch (CidadeSemEstadoException e) {
+				
+				return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
+									 .body(e.getMessage());
+				
+			} catch (CidadeJaCadastradaException e) {
+				
+				return ResponseEntity.status(HttpStatus.CONFLICT)
+						 			 .body(e.getMessage());
+				
+			}
 
 		}
 
@@ -73,7 +90,7 @@ public class EstadoController {
 
 	@DeleteMapping("/{id}")
 	public ResponseEntity<?> remover(@PathVariable Long id) {
-
+		
 		try {
 
 			service.remover(id);
@@ -89,7 +106,7 @@ public class EstadoController {
 			return ResponseEntity.status(HttpStatus.CONFLICT).build();
 
 		}
-
+		
 	}
-
+	
 }

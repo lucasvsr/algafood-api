@@ -10,8 +10,10 @@ public interface EstadoRepository {
 	
 	Estado buscar(Long id);
 	
+	Estado buscar(String nome);
+	
 	Estado adicionar(Estado entidade);
 	
-	void remover(Estado entidade);
+	void remover(Long id);
 
 }
