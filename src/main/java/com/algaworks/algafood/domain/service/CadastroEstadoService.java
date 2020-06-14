@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.algaworks.algafood.domain.exception.EntidadeEmUsoException;
 import com.algaworks.algafood.domain.exception.EntidadeNaoEncontradaException;
+import com.algaworks.algafood.domain.exception.EstadoJaCadastradoException;
 import com.algaworks.algafood.domain.model.Estado;
 import com.algaworks.algafood.domain.repository.EstadoRepository;
 
@@ -18,7 +19,10 @@ public class CadastroEstadoService {
 
 	public Estado adicionar(Estado estado) {
 		
-		return repository.save(estado);	
+		if(repository.findByNome(estado.getNome()) != null)
+			throw new EstadoJaCadastradoException("Estado já cadastrado");
+		
+		return repository.save(estado);
 		
 	}
 	

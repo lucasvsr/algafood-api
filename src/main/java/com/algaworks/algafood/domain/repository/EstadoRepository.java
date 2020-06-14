@@ -8,7 +8,7 @@ import com.algaworks.algafood.domain.model.Estado;
 @Repository
 public interface EstadoRepository extends JpaRepository<Estado, Long>{
 	
-	//Estado buscar(String nome);
+	Estado findByNome(String nome);
 	
 
 }

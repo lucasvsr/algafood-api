@@ -54,6 +54,10 @@ public class CidadeController {
 
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 
+		} catch (CidadeSemEstadoException e) {
+			
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+			
 		}
 		
 	}
