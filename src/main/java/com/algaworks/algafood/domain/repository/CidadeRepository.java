@@ -8,6 +8,6 @@ import com.algaworks.algafood.domain.model.Cidade;
 @Repository
 public interface CidadeRepository extends JpaRepository<Cidade, Long>{
 	
-	Cidade findByNomeAndEstadoId(String nome, Long estado);
+	Boolean existsByNomeAndEstadoId(String nome, Long estado);
 	
 }

@@ -27,7 +27,7 @@ public class CadastroCidadeService {
 		if(cidade.getEstado() == null)
 			throw new CidadeSemEstadoException("Não é possível atualizar/incluir uma cidade sem um estado");
 		
-		if(repository.findByNomeAndEstadoId(cidade.getNome(), cidade.getEstado().getId()) != null)
+		if(repository.existsByNomeAndEstadoId(cidade.getNome(), cidade.getEstado().getId()))
 			throw new CidadeJaCadastradaException("Cidade já cadastrada");
 			
 		return repository.save(cidade);
