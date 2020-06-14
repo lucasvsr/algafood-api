@@ -1,6 +1,7 @@
 package com.algaworks.algafood.api.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,16 +36,16 @@ public class CozinhaController {
 	@GetMapping
 	public List<Cozinha> listar() {
 		
-		return repository.listar();
+		return repository.findAll();
 		
 	}
 	
 	@GetMapping("/{id}")
 	public ResponseEntity<Cozinha> buscar(@PathVariable Long id) {
 
-		Cozinha cozinha = repository.buscar(id);
+		Optional<Cozinha> cozinha = repository.findById(id);
 		
-		if(cozinha != null) return ResponseEntity.ok(cozinha);
+		if(cozinha.isPresent()) return ResponseEntity.ok(cozinha.get());
 		
 		return ResponseEntity.notFound().build();
 		
@@ -62,13 +63,13 @@ public class CozinhaController {
 	public ResponseEntity<Cozinha> atualizar(@PathVariable Long id,
 											 @RequestBody Cozinha atualizada) {
 		
-		Cozinha atual = repository.buscar(id);
+		Optional<Cozinha> atual = repository.findById(id);
 		
-		if(atual != null) {
+		if(atual.isPresent()) {
 			
-			BeanUtils.copyProperties(atualizada, atual, "id"); //Copia os dados do item atualizado para o atual (na base). A partir do terceiro parâmetro, passamos o nome das propriedades que não serão copiadas.
+			BeanUtils.copyProperties(atualizada, atual.get(), "id"); //Copia os dados do item atualizado para o atual (na base). A partir do terceiro parâmetro, passamos o nome das propriedades que não serão copiadas.
 			
-			return ResponseEntity.ok(service.salvar(atual));
+			return ResponseEntity.ok(service.salvar(atual.get()));
 			
 		}
 		
