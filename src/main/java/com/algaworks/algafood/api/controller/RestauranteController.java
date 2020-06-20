@@ -118,6 +118,15 @@ public class RestauranteController {
 		
 	}
 	
+	@GetMapping("/nome-e-taxa")
+	public List<Restaurante> buscarPorNomeCozinha(@RequestParam String nome, 
+												  @RequestParam BigDecimal taxaInicial,
+												  @RequestParam BigDecimal taxaFinal){
+		
+		return repository.find(nome, taxaInicial, taxaFinal);
+		
+	}
+	
 	private void merge(Map<String, Object> origem, Restaurante destino) {
 		
 		ObjectMapper mapper = new ObjectMapper();
