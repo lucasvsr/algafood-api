@@ -111,6 +111,13 @@ public class RestauranteController {
 		
 	}
 	
+	@GetMapping("/nome-e-cozinha")
+	public List<Restaurante> buscarPorNomeCozinha(@RequestParam String nome, @RequestParam Long cozinha){
+		
+		return repository.consultarPorNome(nome, cozinha);
+		
+	}
+	
 	private void merge(Map<String, Object> origem, Restaurante destino) {
 		
 		ObjectMapper mapper = new ObjectMapper();
