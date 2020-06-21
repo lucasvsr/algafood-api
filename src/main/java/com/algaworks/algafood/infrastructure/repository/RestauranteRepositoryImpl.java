@@ -30,8 +30,6 @@ public class RestauranteRepositoryImpl implements RestauranteRepositoryQueries {
 		CriteriaQuery<Restaurante> criteria = builder.createQuery(Restaurante.class);
 		var predicados = new ArrayList<Predicate>();
 		
-		System.out.println(nome + taxaInicial + taxaFinal);
-		
 		Root<Restaurante> root = criteria.from(Restaurante.class);
 		
 		if(StringUtils.hasLength(nome)) predicados.add(builder.like(root.get("nome"), "%" + nome + "%"));
