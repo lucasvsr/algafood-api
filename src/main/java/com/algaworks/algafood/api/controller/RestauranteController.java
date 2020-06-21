@@ -25,8 +25,6 @@ import com.algaworks.algafood.domain.exception.EntidadeNaoEncontradaException;
 import com.algaworks.algafood.domain.model.Restaurante;
 import com.algaworks.algafood.domain.repository.RestauranteRepository;
 import com.algaworks.algafood.domain.service.CadastroRestauranteService;
-import com.algaworks.algafood.infrastructure.repository.spec.RestauranteComFreteGratisSpec;
-import com.algaworks.algafood.infrastructure.repository.spec.RestauranteComNomeSemelhanteSpec;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController // Esta anotação é a junção de @Controller e @ResponseBody
@@ -132,10 +130,7 @@ public class RestauranteController {
 	@GetMapping("/nome-semelhante")
 	public List<Restaurante> buscarPorNomeSemelhante(@RequestParam String nome) {
 		
-		var comFreteGratis = new RestauranteComFreteGratisSpec();
-		var comNomeSemelhante = new RestauranteComNomeSemelhanteSpec(nome);
-		
-		return repository.findAll(comFreteGratis.and(comNomeSemelhante));
+		return repository.findComFreteGratis(nome);
 		
 	}
 	
