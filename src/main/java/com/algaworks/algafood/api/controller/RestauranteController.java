@@ -77,7 +77,7 @@ public class RestauranteController {
 		
 		if(atual.isPresent()) {
 			
-			BeanUtils.copyProperties(atualizado, atual.get(), "id", "formasPagamento"); //Copia os dados do item atualizado para o atual (na base). A partir do terceiro parâmetro, passamos o nome das propriedades que não serão copiadas.
+			BeanUtils.copyProperties(atualizado, atual.get(), "id", "formasPagamento", "endereco"); //Copia os dados do item atualizado para o atual (na base). A partir do terceiro parâmetro, passamos o nome das propriedades que não serão copiadas.
 			
 			return ResponseEntity.ok(service.salvar(atual.get()));
 			
