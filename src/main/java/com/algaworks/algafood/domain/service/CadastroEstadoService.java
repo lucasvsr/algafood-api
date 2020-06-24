@@ -1,7 +1,5 @@
 package com.algaworks.algafood.domain.service;
 
-import javax.persistence.NoResultException;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -21,22 +19,10 @@ public class CadastroEstadoService {
 
 	public Estado adicionar(Estado estado) {
 		
-		try {
-			
-			if(estado.getId() != null) //SE O ID N FOR NULO É UMA ATUALIZAÇÃO
-				return repository.adicionar(estado);
-			
-			if(repository.buscar(estado.getNome()) != null)
-				throw new EstadoJaCadastradoException("Estado já cadastrado");
-				
-			
-		} catch (NoResultException e) {
-			
-			return repository.adicionar(estado);
-			
-		}
+		if(repository.findByNome(estado.getNome()) != null)
+			throw new EstadoJaCadastradoException("Estado já cadastrado");
 		
-		return null;
+		return repository.save(estado);
 		
 	}
 	
@@ -44,7 +30,7 @@ public class CadastroEstadoService {
 		
 		try {
 
-			repository.remover(id);
+			repository.deleteById(id);
 
 		} catch (EmptyResultDataAccessException e) {
 			

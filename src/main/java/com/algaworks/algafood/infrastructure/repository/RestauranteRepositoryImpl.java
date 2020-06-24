@@ -1,50 +1,63 @@
 package com.algaworks.algafood.infrastructure.repository;
 
+import static com.algaworks.algafood.infrastructure.repository.spec.RestauranteSpecs.comFreteGratis;
+import static com.algaworks.algafood.infrastructure.repository.spec.RestauranteSpecs.comNomeSemelhante;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.transaction.Transactional;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
 
 import com.algaworks.algafood.domain.model.Restaurante;
 import com.algaworks.algafood.domain.repository.RestauranteRepository;
+import com.algaworks.algafood.infrastructure.domain.repository.RestauranteRepositoryQueries;
 
-@Component
-public class RestauranteRepositoryImpl implements RestauranteRepository {
+@Repository
+public class RestauranteRepositoryImpl implements RestauranteRepositoryQueries {
 
 	@PersistenceContext
 	private EntityManager manager;
 	
-	@Override
-	public List<Restaurante> listar() {
-		
-		return manager.createQuery("FROM Restaurante c", Restaurante.class)
-					  .getResultList();
-		
-	}
+	@Autowired @Lazy //A ANOTAÇÃO @LAZY É USADA QUANDO QUEREMOS INSTANCIAR ALGO APENAS QUANDO FOR NECESSÁRIO
+	private RestauranteRepository repository;
 	
 	@Override
-	public Restaurante buscar(Long id) {
+	public List<Restaurante> find(String nome, BigDecimal taxaInicial, BigDecimal taxaFinal) {
 		
-		return manager.find(Restaurante.class, id);
+		CriteriaBuilder builder = manager.getCriteriaBuilder();
+		CriteriaQuery<Restaurante> criteria = builder.createQuery(Restaurante.class);
+		var predicados = new ArrayList<Predicate>();
+		
+		Root<Restaurante> root = criteria.from(Restaurante.class);
+		
+		if(StringUtils.hasLength(nome)) predicados.add(builder.like(root.get("nome"), "%" + nome + "%"));
+		
+		if(taxaInicial != null) predicados.add(builder.greaterThanOrEqualTo(root.get("taxaFrete"), taxaInicial));
+		
+		if(taxaFinal != null) predicados.add(builder.lessThanOrEqualTo(root.get("taxaFrete"), taxaFinal));
+		
+		
+		criteria.where(predicados.toArray(new Predicate[0]));
+			
+		return manager.createQuery(criteria).getResultList();
 		
 	}
-	
-	@Transactional
+
 	@Override
-	public Restaurante adicionar(Restaurante restaurante) {
+	public List<Restaurante> findComFreteGratis(String nome) {
 		
-		return manager.merge(restaurante);
-		
-	}
-	
-	@Transactional
-	@Override
-	public void remover(Restaurante restaurante) {
-		
-		manager.remove(buscar(restaurante.getId()));
+		return repository.findAll(comFreteGratis().and(comNomeSemelhante(nome)));
 		
 	}
 

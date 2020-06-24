@@ -1,6 +1,7 @@
 package com.algaworks.algafood.api.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +39,7 @@ public class CidadeController {
 	@ResponseStatus(HttpStatus.OK)
 	public List<Cidade> listar() {
 		
-		return repository.listar();
+		return repository.findAll();
 		
 	}
 	
@@ -53,6 +54,10 @@ public class CidadeController {
 
 			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
 
+		} catch (CidadeSemEstadoException e) {
+			
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+			
 		}
 		
 	}
@@ -60,15 +65,15 @@ public class CidadeController {
 	@PutMapping("/{id}")
 	public ResponseEntity<?> atualizar(@PathVariable Long id, @RequestBody Cidade atualizada) {
 
-		Cidade atual = repository.buscar(id);
+		Optional<Cidade> atual = repository.findById(id);
 
-		if (atual != null) {
+		if (atual.isPresent()) {
 
-			BeanUtils.copyProperties(atualizada, atual, "id");
+			BeanUtils.copyProperties(atualizada, atual.get(), "id");
 			
 			try {
 				
-				return ResponseEntity.ok(service.adicionar(atual));
+				return ResponseEntity.ok(service.adicionar(atual.get()));
 				
 			} catch (CidadeSemEstadoException e) {
 				

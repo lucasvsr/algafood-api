@@ -1,21 +1,12 @@
 package com.algaworks.algafood.domain.repository;
 
-import java.util.List;
+import org.springframework.stereotype.Repository;
 
 import com.algaworks.algafood.domain.model.Cidade;
-import com.algaworks.algafood.domain.model.Estado;
 
-public interface CidadeRepository {
+@Repository
+public interface CidadeRepository extends CustomJpaRepository<Cidade, Long> {
 	
-	List<Cidade> listar();
+	Boolean existsByNomeAndEstadoId(String nome, Long estado);
 	
-	Cidade buscar(Long id);
-	
-	/** Busca a cidade pelo nome e o estado passado*/
-	Cidade buscar(String nome, Estado estado);
-	
-	Cidade adicionar(Cidade entidade);
-	
-	void remover(Long id);
-
 }

@@ -18,7 +18,7 @@ public class CadastroCozinhaService {
 
 	public Cozinha salvar(Cozinha cozinha) {
 
-		return repository.adicionar(cozinha);
+		return repository.save(cozinha);
 
 	}
 
@@ -26,7 +26,7 @@ public class CadastroCozinhaService {
 
 		try {
 
-			repository.remover(id);
+			repository.deleteById(id);
 
 		} catch (EmptyResultDataAccessException e) {
 			

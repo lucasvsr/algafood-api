@@ -1,8 +1,10 @@
 package com.algaworks.algafood.api.controller;
 
 import java.lang.reflect.Field;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.algaworks.algafood.domain.exception.EntidadeNaoEncontradaException;
@@ -37,17 +40,16 @@ public class RestauranteController {
 	@GetMapping
 	public List<Restaurante> listar() {
 
-		return repository.listar();
+		return repository.findAll();
 
 	}
 
 	@GetMapping("/{id}")
 	public ResponseEntity<Restaurante> buscar(@PathVariable Long id) {
 
-		Restaurante restaurante = repository.buscar(id);
+		Optional<Restaurante> restaurante = repository.findById(id);
 
-		if (restaurante != null)
-			return ResponseEntity.ok(restaurante);
+		if(restaurante.isPresent()) return ResponseEntity.ok(restaurante.get());
 
 		return ResponseEntity.notFound().build();
 
@@ -73,13 +75,13 @@ public class RestauranteController {
 	public ResponseEntity<?> atualizar(@PathVariable Long id, 
 									   @RequestBody Restaurante atualizado) {
 		
-		Restaurante atual = repository.buscar(id);
+		Optional<Restaurante> atual = repository.findById(id);
 		
-		if(atual != null) {
+		if(atual.isPresent()) {
 			
-			BeanUtils.copyProperties(atualizado, atual, "id"); //Copia os dados do item atualizado para o atual (na base). A partir do terceiro parâmetro, passamos o nome das propriedades que não serão copiadas.
+			BeanUtils.copyProperties(atualizado, atual.get(), "id"); //Copia os dados do item atualizado para o atual (na base). A partir do terceiro parâmetro, passamos o nome das propriedades que não serão copiadas.
 			
-			return ResponseEntity.ok(service.salvar(atual));
+			return ResponseEntity.ok(service.salvar(atual.get()));
 			
 		}
 		
@@ -91,17 +93,54 @@ public class RestauranteController {
 	public ResponseEntity<?> alterar(@PathVariable Long id, 
 									 @RequestBody Map<String, Object> campos) {
 		
-		Restaurante atual = repository.buscar(id);
+		Optional<Restaurante> atual = repository.findById(id);
 		
-		if(atual == null)
+		if(atual.isEmpty())
 			return ResponseEntity.notFound().build();
 		
-		merge(campos, atual);
+		merge(campos, atual.get());
 		
-		return atualizar(id, atual);
+		return atualizar(id, atual.get());
 		
 	}
-
+	
+	@GetMapping("/taxa")
+	public List<Restaurante> buscarPorTaxas(@RequestParam BigDecimal menor, @RequestParam BigDecimal maior) {
+		
+		return repository.findByTaxaFreteBetween(menor, maior);
+		
+	}
+	
+	@GetMapping("/nome-e-cozinha")
+	public List<Restaurante> buscarPorNomeCozinha(@RequestParam String nome, @RequestParam Long cozinha){
+		
+		return repository.consultarPorNome(nome, cozinha);
+		
+	}
+	
+	@GetMapping("/nome-e-taxa")
+	public List<Restaurante> buscarPorNomeCozinha(@RequestParam String nome, 
+												  @RequestParam BigDecimal taxaInicial,
+												  @RequestParam BigDecimal taxaFinal){
+		
+		return repository.find(nome, taxaInicial, taxaFinal);
+		
+	}
+	
+	@GetMapping("/nome-semelhante")
+	public List<Restaurante> buscarPorNomeSemelhante(@RequestParam String nome) {
+		
+		return repository.findComFreteGratis(nome);
+		
+	}
+	
+	@GetMapping("/primeiro")
+	public Optional<Restaurante> primeiro() {
+		
+		return repository.buscarPrimeiro();
+		
+	}
+	
 	private void merge(Map<String, Object> origem, Restaurante destino) {
 		
 		ObjectMapper mapper = new ObjectMapper();
