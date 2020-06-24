@@ -134,6 +134,13 @@ public class RestauranteController {
 		
 	}
 	
+	@GetMapping("/primeiro")
+	public Optional<Restaurante> primeiro() {
+		
+		return repository.buscarPrimeiro();
+		
+	}
+	
 	private void merge(Map<String, Object> origem, Restaurante destino) {
 		
 		ObjectMapper mapper = new ObjectMapper();
