@@ -1,6 +1,7 @@
 package com.algaworks.algafood.domain.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -13,6 +14,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -50,5 +54,15 @@ public class Restaurante {
 			   joinColumns = @JoinColumn(name = "restaurante_id"),
 			   inverseJoinColumns = @JoinColumn(name = "forma_pagamento_id"))
 	private List<FormaPagamento> formasPagamento;
+	
+	@JsonIgnore
+	@CreationTimestamp //ATRIBUI A DATA ATUAL NO MOMENTO DA CRIAÇÃO DE UMA ENTIDADE NA BASE
+	@Column(nullable = false)
+	private LocalDateTime dataCadastro;
+	
+	@JsonIgnore
+	@UpdateTimestamp //ATRIBUI A DATA ATUAL NO MOMENTO DA ATUALIZAÇÃO DE UMA ENTIDADE NA BASE
+	@Column(nullable = false)
+	private LocalDateTime dataAtualizacao;
 
 }
