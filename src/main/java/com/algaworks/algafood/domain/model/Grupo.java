@@ -7,29 +7,33 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-//@JsonRootName("cozinha") //PERMITE ALTERAR O NOME DO OBJETO XML QUANDO USAMOS ESSA REPRESENTAÇÃO NO SERVIÇO REST
 @Entity
 @Data // LOMBOK: Serve para criar automáticamente os getters, setters, toString, equals e hashcode
 @EqualsAndHashCode(onlyExplicitlyIncluded = true) //ao colocar esta tag, sobrescrevemos o @Data para deixar claro quais atributos vamos usar para a geração desses dois métodos
-public class Cozinha {
+public class Grupo {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@EqualsAndHashCode.Include //Indica que este atributo deve ser usado na geração do equals e hashcode
+	@EqualsAndHashCode.Include
 	private Long id;
 	
 	@Column(nullable = false)
 	private String nome;
 	
 	@JsonIgnore
-	@OneToMany(mappedBy = "cozinha")
-	private List<Restaurante> restaurantes;
+	@ManyToMany
+	@JoinTable(name = "grupo_permissao",
+			   joinColumns = @JoinColumn(name = "grupo_id"),
+			   inverseJoinColumns = @JoinColumn(name = "permissao_id"))
+	private List<Permissao> permissoes;
 
 }
