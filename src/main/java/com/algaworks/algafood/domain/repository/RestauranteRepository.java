@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -17,7 +18,7 @@ public interface RestauranteRepository extends CustomJpaRepository<Restaurante, 
 	
 	List<Restaurante> findByTaxaFreteBetween(BigDecimal menor, BigDecimal maior);
 	
-	//@Query("FROM Restaurante r WHERE r.nome LIKE %:nome% AND r.cozinha.id = :id") //ESSA CONSULTA FOI EXTERNALIZADA PARA O resources/META-INF/orm.xml
+	@Query("FROM Restaurante r WHERE r.nome LIKE %:nome% AND r.cozinha.id = :id")
 	List<Restaurante> consultarPorNome(String nome, @Param("id") Long cozinha);
 	
 
