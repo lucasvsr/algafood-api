@@ -1,3 +1,47 @@
+set foreign_key_checks = 0;
+
+delete from grupo_permissao;
+
+delete from grupo;
+
+delete from permissao;
+
+delete from produto;
+
+delete from restaurante_forma_pagamento;
+
+delete from forma_pagamento;
+
+delete from restaurante;
+
+delete from cidade;
+
+delete from cozinha;
+
+delete from estado;
+
+delete from usuario;
+
+set foreign_key_checks = 1;
+
+alter table grupo auto_increment = 1;
+
+alter table permissao auto_increment = 1;
+
+alter table produto auto_increment = 1;
+
+alter table forma_pagamento auto_increment = 1;
+
+alter table restaurante auto_increment = 1;
+
+alter table cidade auto_increment = 1;
+
+alter table cozinha auto_increment = 1;
+
+alter table estado auto_increment = 1;
+
+alter table usuario auto_increment = 1;
+
 insert into cozinha (id, nome) values (1, 'Tailandesa');
 insert into cozinha (id, nome) values (2, 'Indiana');
 
@@ -17,7 +61,5 @@ INSERT INTO algafood.restaurante (id, data_atualizacao, data_cadastro, endereco_
 insert into forma_pagamento (id, descricao) values (1, 'Cartão de crédito');
 insert into forma_pagamento (id, descricao) values (2, 'Cartão de débito');
 insert into forma_pagamento (id, descricao) values (3, 'Dinheiro');
-
-
 
 insert into restaurante_forma_pagamento (restaurante_id, forma_pagamento_id) values (1,1), (1,2), (1,3), (2,3), (3,2), (3,3);
