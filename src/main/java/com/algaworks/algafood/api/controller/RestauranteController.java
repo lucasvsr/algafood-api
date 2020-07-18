@@ -3,13 +3,13 @@ package com.algaworks.algafood.api.controller;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ReflectionUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.algaworks.algafood.domain.exception.EntidadeNaoEncontradaException;
 import com.algaworks.algafood.domain.model.Restaurante;
 import com.algaworks.algafood.domain.repository.RestauranteRepository;
 import com.algaworks.algafood.domain.service.CadastroRestauranteService;
@@ -43,29 +42,17 @@ public class RestauranteController {
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<Restaurante> buscar(@PathVariable Long id) {
+	public Restaurante buscar(@PathVariable Long id) {
 
-		Optional<Restaurante> restaurante = repository.findById(id);
-
-		if(restaurante.isPresent()) return ResponseEntity.ok(restaurante.get());
-
-		return ResponseEntity.notFound().build();
+		return service.buscar(id);
 
 	}
 
 	@PostMapping
 	public ResponseEntity<?> adicionar(@RequestBody Restaurante restaurante) {
 
-		try {
-
-			return ResponseEntity.status(HttpStatus.CREATED).body(service.salvar(restaurante));
-
-		} catch (EntidadeNaoEncontradaException e) {
-
-			return ResponseEntity.badRequest()
-								 .body(e.getMessage());
-
-		}
+		return ResponseEntity.status(HttpStatus.CREATED)
+					  		 .body(service.salvar(restaurante));
 
 	}
 	
@@ -73,32 +60,30 @@ public class RestauranteController {
 	public ResponseEntity<?> atualizar(@PathVariable Long id, 
 									   @RequestBody Restaurante atualizado) {
 		
-		Optional<Restaurante> atual = repository.findById(id);
+		Restaurante atual = service.buscar(id);
 		
-		if(atual.isPresent()) {
+		BeanUtils.copyProperties(atualizado, atual, "id", "formasPagamento", "endereco", "dataCadastro"); //Copia os dados do item atualizado para o atual (na base). A partir do terceiro parâmetro, passamos o nome das propriedades que não serão copiadas.
 			
-			BeanUtils.copyProperties(atualizado, atual.get(), "id", "formasPagamento", "endereco", "dataCadastro"); //Copia os dados do item atualizado para o atual (na base). A partir do terceiro parâmetro, passamos o nome das propriedades que não serão copiadas.
-			
-			return ResponseEntity.ok(service.salvar(atual.get()));
-			
-		}
-		
-		return ResponseEntity.notFound().build();		
-		
+		return ResponseEntity.ok(service.salvar(atual));
+					
 	}
 	
 	@PatchMapping("/{id}")
 	public ResponseEntity<?> alterar(@PathVariable Long id, 
 									 @RequestBody Map<String, Object> campos) {
 		
-		Optional<Restaurante> atual = repository.findById(id);
+		Restaurante atual = service.buscar(id);
 		
-		if(atual.isEmpty())
-			return ResponseEntity.notFound().build();
+		merge(campos, atual);
 		
-		merge(campos, atual.get());
+		return atualizar(id, atual);
 		
-		return atualizar(id, atual.get());
+	}
+	
+	@DeleteMapping("/{id}")
+	public void remover(@PathVariable Long id) {
+		
+		service.remover(id);
 		
 	}
 	

@@ -1,7 +1,6 @@
 package com.algaworks.algafood.api.controller;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.algaworks.algafood.domain.exception.CidadeJaCadastradaException;
-import com.algaworks.algafood.domain.exception.CidadeSemEstadoException;
-import com.algaworks.algafood.domain.exception.EntidadeEmUsoException;
-import com.algaworks.algafood.domain.exception.EntidadeNaoEncontradaException;
 import com.algaworks.algafood.domain.model.Cidade;
 import com.algaworks.algafood.domain.repository.CidadeRepository;
 import com.algaworks.algafood.domain.service.CadastroCidadeService;
@@ -46,72 +41,25 @@ public class CidadeController {
 	@PostMapping
 	public ResponseEntity<?> adicionar(@RequestBody Cidade cidade) {
 		
-		try {
-
-			return ResponseEntity.status(HttpStatus.CREATED).body(service.adicionar(cidade));
-
-		} catch (CidadeJaCadastradaException e) {
-
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
-
-		} catch (CidadeSemEstadoException e) {
-			
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-			
-		}
-		
+		return ResponseEntity.status(HttpStatus.CREATED)
+							 .body(service.adicionar(cidade));		
 	}
 	
 	@PutMapping("/{id}")
 	public ResponseEntity<?> atualizar(@PathVariable Long id, @RequestBody Cidade atualizada) {
 
-		Optional<Cidade> atual = repository.findById(id);
+		Cidade atual = service.buscar(id);
 
-		if (atual.isPresent()) {
-
-			BeanUtils.copyProperties(atualizada, atual.get(), "id");
+		BeanUtils.copyProperties(atualizada, atual, "id");
 			
-			try {
+		return ResponseEntity.ok(service.adicionar(atual));
 				
-				return ResponseEntity.ok(service.adicionar(atual.get()));
-				
-			} catch (CidadeSemEstadoException e) {
-				
-				return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
-									 .body(e.getMessage());
-				
-			} catch (CidadeJaCadastradaException e) {
-				
-				return ResponseEntity.status(HttpStatus.CONFLICT)
-						 			 .body(e.getMessage());
-				
-			}
-
-		}
-
-		return ResponseEntity.notFound().build();
-
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<?> remover(@PathVariable Long id) {
-		
-		try {
+	public void remover(@PathVariable Long id) {
 
-			service.remover(id);
-
-			return ResponseEntity.noContent().build();
-
-		} catch (EntidadeNaoEncontradaException e) {
-
-			return ResponseEntity.notFound().build();
-
-		} catch (EntidadeEmUsoException e) {
-
-			return ResponseEntity.status(HttpStatus.CONFLICT).build();
-
-		}
-		
+		service.remover(id);
 	}
 	
 }
