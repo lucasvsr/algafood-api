@@ -38,11 +38,18 @@ public class CidadeController {
 		
 	}
 	
-	@PostMapping
-	public ResponseEntity<?> adicionar(@RequestBody Cidade cidade) {
+	@GetMapping("/{id}")
+	public Cidade buscar(@PathVariable Long id) {
 		
-		return ResponseEntity.status(HttpStatus.CREATED)
-							 .body(service.adicionar(cidade));		
+		return service.buscar(id);
+		
+	}
+	
+	@PostMapping
+	@ResponseStatus(HttpStatus.CREATED)
+	public Cidade adicionar(@RequestBody Cidade cidade) {
+		
+		return service.adicionar(cidade);		
 	}
 	
 	@PutMapping("/{id}")
