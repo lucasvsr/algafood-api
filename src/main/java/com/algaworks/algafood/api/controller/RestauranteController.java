@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.algaworks.algafood.domain.exception.EntidadeNaoEncontradaException;
+import com.algaworks.algafood.domain.exception.NegocioException;
 import com.algaworks.algafood.domain.model.Restaurante;
 import com.algaworks.algafood.domain.repository.RestauranteRepository;
 import com.algaworks.algafood.domain.service.CadastroRestauranteService;
@@ -51,7 +53,15 @@ public class RestauranteController {
 	@PostMapping
 	public Restaurante adicionar(@RequestBody Restaurante restaurante) {
 
-		return service.salvar(restaurante);
+		try {
+			
+			return service.salvar(restaurante);
+		
+		} catch (EntidadeNaoEncontradaException e) {
+			
+			throw new NegocioException(e.getMessage());
+			
+		}
 
 	}
 	
@@ -64,7 +74,15 @@ public class RestauranteController {
 		
 		BeanUtils.copyProperties(atualizado, atual, "id", "formasPagamento", "endereco", "dataCadastro"); //Copia os dados do item atualizado para o atual (na base). A partir do terceiro parâmetro, passamos o nome das propriedades que não serão copiadas.
 			
-		return service.salvar(atual);
+		try {
+			
+			return service.salvar(atual);
+		
+		} catch (EntidadeNaoEncontradaException e) {
+			
+			throw new NegocioException(e.getMessage());
+			
+		}
 					
 	}
 	
