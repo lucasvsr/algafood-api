@@ -75,7 +75,7 @@ public class CidadeController {
 
 		} catch (EntidadeNaoEncontradaException e) {
 
-			throw new NegocioException(e.getMessage());
+			throw new NegocioException(e.getMessage(), e);
 
 		}
 
@@ -86,5 +86,6 @@ public class CidadeController {
 
 		service.remover(id);
 	}
+	
 
 }

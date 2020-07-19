@@ -5,8 +5,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.algaworks.algafood.domain.exception.CidadeJaCadastradaException;
+import com.algaworks.algafood.domain.exception.CidadeNaoEncontradaException;
 import com.algaworks.algafood.domain.exception.EntidadeEmUsoException;
-import com.algaworks.algafood.domain.exception.EntidadeNaoEncontradaException;
 import com.algaworks.algafood.domain.model.Cidade;
 import com.algaworks.algafood.domain.model.Estado;
 import com.algaworks.algafood.domain.repository.CidadeRepository;
@@ -15,7 +15,6 @@ import com.algaworks.algafood.domain.repository.CidadeRepository;
 public class CadastroCidadeService {
 
 	private static final String CIDADE_EM_USO = "Cidade de código %d não pode ser removida, pois está em uso";
-	private static final String CIDADE_NÃO_ENCONTRADA = "Cidade de código %d não encontrada";
 	private static final String CIDADE_JÁ_CADASTRADA = "Cidade já cadastrada";
 	
 	@Autowired
@@ -42,7 +41,7 @@ public class CadastroCidadeService {
 	public Cidade buscar(Long id) {
 		
 		return repository.findById(id).orElseThrow(
-				() -> new EntidadeNaoEncontradaException(String.format(CIDADE_NÃO_ENCONTRADA, id)));
+				() -> new CidadeNaoEncontradaException(id));
 		
 	}
 

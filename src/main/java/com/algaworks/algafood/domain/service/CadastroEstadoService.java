@@ -5,8 +5,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.algaworks.algafood.domain.exception.EntidadeEmUsoException;
-import com.algaworks.algafood.domain.exception.EntidadeNaoEncontradaException;
 import com.algaworks.algafood.domain.exception.EstadoJaCadastradoException;
+import com.algaworks.algafood.domain.exception.EstadoNaoEncontradoException;
 import com.algaworks.algafood.domain.model.Estado;
 import com.algaworks.algafood.domain.repository.EstadoRepository;
 
@@ -14,7 +14,6 @@ import com.algaworks.algafood.domain.repository.EstadoRepository;
 public class CadastroEstadoService {
 	
 	private static final String ESTADO_EM_USO = "Estado de código %d não pode ser removido, pois está em uso";
-	private static final String ESTADO_NÃO_ENCONTRADO = "Estado de código %d não encontrado";
 	private static final String ESTADO_JÁ_CADASTRADO = "Estado já cadastrado";
 	@Autowired
 	private EstadoRepository repository;
@@ -31,7 +30,7 @@ public class CadastroEstadoService {
 	public Estado buscar(Long id) {
 		
 		return repository.findById(id).orElseThrow(
-				() -> new EntidadeNaoEncontradaException(String.format(ESTADO_NÃO_ENCONTRADO, id)));
+				() -> new EstadoNaoEncontradoException(id));
 		
 	}
 	
