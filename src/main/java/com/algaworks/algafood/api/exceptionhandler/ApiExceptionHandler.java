@@ -1,12 +1,19 @@
 package com.algaworks.algafood.api.exceptionhandler;
 
-import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.TypeMismatchException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import com.algaworks.algafood.domain.exception.CidadeJaCadastradaException;
 import com.algaworks.algafood.domain.exception.CidadeSemEstadoException;
@@ -14,76 +21,185 @@ import com.algaworks.algafood.domain.exception.EntidadeEmUsoException;
 import com.algaworks.algafood.domain.exception.EntidadeNaoEncontradaException;
 import com.algaworks.algafood.domain.exception.EstadoJaCadastradoException;
 import com.algaworks.algafood.domain.exception.NegocioException;
+import com.fasterxml.jackson.databind.exc.IgnoredPropertyException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.fasterxml.jackson.databind.exc.PropertyBindingException;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 
 @ControllerAdvice
-public class ApiExceptionHandler {
+public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
+	
+	@Override
+	protected ResponseEntity<Object> handleTypeMismatch(TypeMismatchException ex, HttpHeaders headers,
+			HttpStatus status, WebRequest request) {
+		
+		Throwable rootCause = ExceptionUtils.getRootCause(ex);
+		
+		if(rootCause instanceof NumberFormatException) {
+			
+			return handleMethodArgumentTypeMismatchException((NumberFormatException) rootCause, headers, status, request);
+			
+		}
+		
+		Problem problem = createProblemBuilder(status,
+				   ProblemType.MENSAGEM_INCOMPREENSIVEL,
+				   "A URL está invalida").build();
+		
+		return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
+		
+		
+	}
+	
+	private ResponseEntity<Object> handleMethodArgumentTypeMismatchException(
+			NumberFormatException rootCause, HttpHeaders headers, HttpStatus status, WebRequest request) {
+		
+		System.out.println("Erro: "+rootCause.getLocalizedMessage());
+		System.out.println(((ServletWebRequest)request).getRequest().getRequestURI());
+		
+		return null;
+		
+	}
+
+	@Override
+	protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
+			HttpHeaders headers, HttpStatus status, WebRequest request) {
+		
+		Throwable rootCause = ExceptionUtils.getRootCause(ex);
+		
+		if(rootCause instanceof InvalidFormatException) {
+			
+			return handleInvalidFormatException((InvalidFormatException) rootCause, headers, status, request);
+			
+		} else if (rootCause instanceof PropertyBindingException) {
+			
+			return handlePropertyBindingException((PropertyBindingException) rootCause, headers, status, request);
+			
+		}
+
+		Problem problem = createProblemBuilder(status,
+											   ProblemType.MENSAGEM_INCOMPREENSIVEL,
+											   "O corpo da requisição está inválido. Verique erro de sintaxe.").build();
+
+		return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
+	}
+
+	private ResponseEntity<Object> handlePropertyBindingException(PropertyBindingException ex,
+			HttpHeaders headers, HttpStatus status, WebRequest request) {
+		
+		String path = ex.getPath().stream()
+				  .map(ref -> ref.getFieldName())
+				  .collect(Collectors.joining("."));
+		
+		String detail = null;
+		
+		if(ex instanceof IgnoredPropertyException)
+			detail = String.format("O campo '%s' não pode ser informado nesta requisição", path);
+		
+		if(ex instanceof UnrecognizedPropertyException)
+			detail = String.format("O campo '%s' não existe", path);
+		
+		Problem problem = createProblemBuilder(status, ProblemType.MENSAGEM_INCOMPREENSIVEL, detail).build();
+		
+		return handleExceptionInternal(ex, problem, headers, status, request);
+		
+	}
+
+	private ResponseEntity<Object> handleInvalidFormatException(InvalidFormatException ex, HttpHeaders headers,
+			HttpStatus status, WebRequest request) {
+		
+		String path = ex.getPath().stream()
+								  .map(ref -> ref.getFieldName())
+								  .collect(Collectors.joining("."));
+		
+		Problem problem = createProblemBuilder(status, ProblemType.MENSAGEM_INCOMPREENSIVEL,
+				   String.format("A propriedade '%s' recebeu o valor '%s', que é de um tipo inválido. "
+				   		+ "Corrija e informe um valor compátivel com o tipo %s.", path, ex.getValue(),
+				   																	   	ex.getTargetType().getSimpleName())).build();
+		
+		return handleExceptionInternal(ex, problem, headers, status, request);
+		
+	}
 
 	@ExceptionHandler(EntidadeNaoEncontradaException.class)
-	public ResponseEntity<?> tratarEstadoNaoEncontradoException(EntidadeNaoEncontradaException e) {
+	public ResponseEntity<?> tratarEstadoNaoEncontradoException(EntidadeNaoEncontradaException e, WebRequest request) {
 
-		Problema problema = Problema.builder().dataHora(LocalDateTime.now()).mensagem(e.getMessage()).build();
+		HttpStatus status = HttpStatus.NOT_FOUND;
 
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problema);
+		Problem problem = createProblemBuilder(status, ProblemType.ENTIDADE_NAO_ENCONTRADA, e.getMessage()).build();
+
+		return handleExceptionInternal(e, problem, new HttpHeaders(), status, request);
 
 	}
 
 	@ExceptionHandler(NegocioException.class)
-	public ResponseEntity<?> tratarNegocioException(NegocioException e) {
+	public ResponseEntity<?> tratarNegocioException(NegocioException e, WebRequest request) {
 
-		Problema problema = Problema.builder().dataHora(LocalDateTime.now()).mensagem(e.getMessage()).build();
+		HttpStatus status = HttpStatus.BAD_REQUEST;
 
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problema);
+		Problem problem = createProblemBuilder(status, ProblemType.NEGOCIO_EXCEPTION, e.getMessage()).build();
 
-	}
-
-	@ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-	public ResponseEntity<?> tratarHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException e) {
-
-		Problema problema = Problema.builder().dataHora(LocalDateTime.now())
-											  .mensagem("O tipo de mídia não é suportado").build();
-
-		return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).body(problema);
+		return handleExceptionInternal(e, problem, new HttpHeaders(), status, request);
 
 	}
-	
+
 	@ExceptionHandler(EntidadeEmUsoException.class)
-	public ResponseEntity<?> tratarEntidadeEmUsoException(EntidadeEmUsoException e) {
+	public ResponseEntity<?> tratarEntidadeEmUsoException(EstadoJaCadastradoException e, WebRequest request) {
 		
-		Problema problema = Problema.builder().dataHora(LocalDateTime.now())
-				  							  .mensagem(e.getMessage()).build();
+		HttpStatus status = HttpStatus.CONFLICT;
+		
+		Problem problem = createProblemBuilder(status, ProblemType.ENTIDADE_EM_USO, e.getMessage()).build();
 
-		return ResponseEntity.status(HttpStatus.CONFLICT).body(problema);
-		
+		return handleExceptionInternal(e, problem, new HttpHeaders(), status, request);
+
 	}
-	
+
 	@ExceptionHandler(CidadeSemEstadoException.class)
-	public ResponseEntity<?> tratarCidadeSemEstadoException(CidadeSemEstadoException e) {
+	public ResponseEntity<?> tratarCidadeSemEstadoException(EstadoJaCadastradoException e, WebRequest request) {
 
-		Problema problema = Problema.builder().dataHora(LocalDateTime.now())
-				  							  .mensagem(e.getMessage()).build();
+		return handleExceptionInternal(e, e.getMessage(), new HttpHeaders(), HttpStatus.CONFLICT, request);
 
-		return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(problema);
-		
 	}
-	
+
 	@ExceptionHandler(EstadoJaCadastradoException.class)
-	public ResponseEntity<?> tratarEstadoJaCadastradoException(EstadoJaCadastradoException e) {
+	public ResponseEntity<?> tratarEstadoJaCadastradoException(EstadoJaCadastradoException e, WebRequest request) {
 
-		Problema problema = Problema.builder().dataHora(LocalDateTime.now())
-				  							  .mensagem(e.getMessage()).build();
+		return handleExceptionInternal(e, e.getMessage(), new HttpHeaders(), HttpStatus.CONFLICT, request);
 
-		return ResponseEntity.status(HttpStatus.CONFLICT).body(problema);
-		
 	}
-	
+
 	@ExceptionHandler(CidadeJaCadastradaException.class)
-	public ResponseEntity<?> tratarCidadeJaCadastradaException(CidadeJaCadastradaException e) {
+	public ResponseEntity<?> tratarCidadeJaCadastradaException(CidadeJaCadastradaException e, WebRequest request) {
 
-		Problema problema = Problema.builder().dataHora(LocalDateTime.now())
-				  							  .mensagem(e.getMessage()).build();
+		return handleExceptionInternal(e, e.getMessage(), new HttpHeaders(), HttpStatus.CONFLICT, request);
 
-		return ResponseEntity.status(HttpStatus.CONFLICT).body(problema);
-		
+	}
+
+	@Override
+	protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers,
+			HttpStatus status, WebRequest request) {
+
+		if (body == null) {
+
+			body = Problem.builder().title(status.getReasonPhrase()).status(status.value()).build();
+
+		} else if (body instanceof String) {
+
+			body = Problem.builder().title((String) body).status(status.value()).build();
+		}
+
+		return super.handleExceptionInternal(ex, body, headers, status, request);
+	}
+
+	private Problem.ProblemBuilder createProblemBuilder(HttpStatus status, 
+														ProblemType problemType, 
+														String detail) { 
+		// ProblemBuilder é uma subclasse criada pelo @Builder da classe Problem (Lombok)
+
+		return Problem.builder().status(status.value())
+								.type(problemType.getUri())
+								.title(problemType.getTitle())
+								.detail(detail);
+
 	}
 
 }

@@ -4,9 +4,14 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +29,7 @@ import com.algaworks.algafood.domain.exception.NegocioException;
 import com.algaworks.algafood.domain.model.Restaurante;
 import com.algaworks.algafood.domain.repository.RestauranteRepository;
 import com.algaworks.algafood.domain.service.CadastroRestauranteService;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController // Esta anotação é a junção de @Controller e @ResponseBody
@@ -54,73 +60,104 @@ public class RestauranteController {
 	public Restaurante adicionar(@RequestBody Restaurante restaurante) {
 
 		try {
-			
+
 			return service.salvar(restaurante);
-		
+
 		} catch (EntidadeNaoEncontradaException e) {
-			
+
 			throw new NegocioException(e.getMessage());
-			
+
 		}
 
 	}
-	
+
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public Restaurante atualizar(@PathVariable Long id, 
-									   @RequestBody Restaurante atualizado) {
-		
+	public Restaurante atualizar(@PathVariable Long id, @RequestBody Restaurante atualizado) {
+
 		Restaurante atual = service.buscar(id);
-		
-		BeanUtils.copyProperties(atualizado, atual, "id", "formasPagamento", "endereco", "dataCadastro"); //Copia os dados do item atualizado para o atual (na base). A partir do terceiro parâmetro, passamos o nome das propriedades que não serão copiadas.
-			
+
+		BeanUtils.copyProperties(atualizado, atual, "id", "formasPagamento", "endereco", "dataCadastro"); // Copia os
+																											// dados do
+																											// item
+																											// atualizado
+																											// para o
+																											// atual (na
+																											// base). A
+																											// partir do
+																											// terceiro
+																											// parâmetro,
+																											// passamos
+																											// o nome
+																											// das
+																											// propriedades
+																											// que não
+																											// serão
+																											// copiadas.
+
 		try {
-			
+
 			return service.salvar(atual);
-		
+
 		} catch (EntidadeNaoEncontradaException e) {
-			
+
 			throw new NegocioException(e.getMessage());
-			
+
 		}
-					
+
 	}
-	
+
 	@PatchMapping("/{id}")
-	public Restaurante alterar(@PathVariable Long id, 
-									 @RequestBody Map<String, Object> campos) {
-		
+	public Restaurante alterar(@PathVariable Long id, @RequestBody Map<String, Object> campos, HttpServletRequest request) {
+
 		Restaurante atual = service.buscar(id);
-		
-		merge(campos, atual);
-		
+
+		merge(campos, atual, request);
+
 		return atualizar(id, atual);
-		
+
 	}
-	
+
 	@DeleteMapping("/{id}")
 	public void remover(@PathVariable Long id) {
-		
+
 		service.remover(id);
-		
+
 	}
-	
-	private void merge(Map<String, Object> origem, Restaurante destino) {
+
+	private void merge(Map<String, Object> origem, Restaurante destino, HttpServletRequest request) {
 		
-		ObjectMapper mapper = new ObjectMapper();
-		Restaurante original = mapper.convertValue(origem, Restaurante.class); //CONVERTE O MAP EM ENTIDADE
-		
-		origem.forEach((nome, valor) -> {
+		ServletServerHttpRequest servlet = new ServletServerHttpRequest(request);
+
+		try {
+
+			ObjectMapper mapper = new ObjectMapper();
+			mapper.configure(DeserializationFeature.FAIL_ON_IGNORED_PROPERTIES, true); // LANÇA UM IllegalArgumentException
+			mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true); // LANÇA UM IllegalArgumentException
+			Restaurante original = mapper.convertValue(origem, Restaurante.class); // CONVERTE O MAP EM ENTIDADE
+
+			origem.forEach((nome, valor) -> {
+
+				Field campo = ReflectionUtils.findField(Restaurante.class, nome); // PEGA O CAMPO DA ENTIDADE, O CAMPO N
+																					// O VALOR
+				campo.setAccessible(true); // SE O CAMPO ESTIVER PRIVADO, PRECISA SETAR ESSE MÉTODO PARA TRUE
+
+				Object novoValor = ReflectionUtils.getField(campo, original); // PEGA O CAMPO E ATRIBUI O VALOR CONTIDO
+																				// NO OBJETO CONVERTIDO PARA ENTIDADE
+
+				ReflectionUtils.setField(campo, destino, novoValor); // PEGA O CAMPO DO OBJETO DESTINO E ATRIBUI O VALOR
+																		// CONVERTIDO
+
+			});
+
+		} catch (IllegalArgumentException e) {
 			
-			Field campo = ReflectionUtils.findField(Restaurante.class, nome); //PEGA O CAMPO DA ENTIDADE, O CAMPO N O VALOR
-			campo.setAccessible(true); // SE O CAMPO ESTIVER PRIVADO, PRECISA SETAR ESSE MÉTODO PARA TRUE
+			Throwable rootCause = ExceptionUtils.getRootCause(e);
 			
-			Object novoValor = ReflectionUtils.getField(campo, original); //PEGA O CAMPO E ATRIBUI O VALOR CONTIDO NO OBJETO CONVERTIDO PARA ENTIDADE
+			throw new HttpMessageNotReadableException(e.getMessage(), rootCause, servlet); //// LANÇA UM HttpMessageNotReadableException e é pego como exceç
 			
-			ReflectionUtils.setField(campo, destino, novoValor); //PEGA O CAMPO DO OBJETO DESTINO E ATRIBUI O VALOR CONVERTIDO
-			
-		});
-		
+		}
+
 	}
 
 }
