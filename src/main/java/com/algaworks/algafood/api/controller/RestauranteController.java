@@ -50,8 +50,8 @@ public class RestauranteController {
 	}
 
 	@GetMapping("/{id}")
-	public Restaurante buscar(@PathVariable Long id) {
-
+	public Restaurante buscar(@PathVariable Long id) throws Exception {
+		
 		return service.buscar(id);
 
 	}
