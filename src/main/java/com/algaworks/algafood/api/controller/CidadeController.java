@@ -1,12 +1,10 @@
 package com.algaworks.algafood.api.controller;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,101 +15,77 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.algaworks.algafood.domain.exception.CidadeJaCadastradaException;
-import com.algaworks.algafood.domain.exception.CidadeSemEstadoException;
-import com.algaworks.algafood.domain.exception.EntidadeEmUsoException;
 import com.algaworks.algafood.domain.exception.EntidadeNaoEncontradaException;
+import com.algaworks.algafood.domain.exception.NegocioException;
 import com.algaworks.algafood.domain.model.Cidade;
 import com.algaworks.algafood.domain.repository.CidadeRepository;
 import com.algaworks.algafood.domain.service.CadastroCidadeService;
 
-@RestController //Esta anotação é a junção de @Controller e @ResponseBody
+@RestController // Esta anotação é a junção de @Controller e @ResponseBody
 @RequestMapping(value = "/cidades")
 public class CidadeController {
-	
+
 	@Autowired
 	private CidadeRepository repository;
-	
+
 	@Autowired
 	private CadastroCidadeService service;
-	
+
 	@GetMapping
 	@ResponseStatus(HttpStatus.OK)
 	public List<Cidade> listar() {
-		
+
 		return repository.findAll();
-		
+
 	}
-	
+
+	@GetMapping("/{id}")
+	public Cidade buscar(@PathVariable Long id) {
+
+		return service.buscar(id);
+
+	}
+
 	@PostMapping
-	public ResponseEntity<?> adicionar(@RequestBody Cidade cidade) {
-		
+	@ResponseStatus(HttpStatus.CREATED)
+	public Cidade adicionar(@RequestBody Cidade cidade) {
+
 		try {
 
-			return ResponseEntity.status(HttpStatus.CREATED).body(service.adicionar(cidade));
+			return service.adicionar(cidade);
 
-		} catch (CidadeJaCadastradaException e) {
+		} catch (EntidadeNaoEncontradaException e) {
 
-			return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+			throw new NegocioException(e.getMessage());
 
-		} catch (CidadeSemEstadoException e) {
-			
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-			
 		}
-		
 	}
-	
+
 	@PutMapping("/{id}")
-	public ResponseEntity<?> atualizar(@PathVariable Long id, @RequestBody Cidade atualizada) {
+	@ResponseStatus(HttpStatus.OK)
+	public Cidade atualizar(@PathVariable Long id, @RequestBody Cidade atualizada) {
 
-		Optional<Cidade> atual = repository.findById(id);
+		Cidade atual = service.buscar(id);
 
-		if (atual.isPresent()) {
+		BeanUtils.copyProperties(atualizada, atual, "id");
 
-			BeanUtils.copyProperties(atualizada, atual.get(), "id");
-			
-			try {
-				
-				return ResponseEntity.ok(service.adicionar(atual.get()));
-				
-			} catch (CidadeSemEstadoException e) {
-				
-				return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
-									 .body(e.getMessage());
-				
-			} catch (CidadeJaCadastradaException e) {
-				
-				return ResponseEntity.status(HttpStatus.CONFLICT)
-						 			 .body(e.getMessage());
-				
-			}
+		try {
+
+			return service.adicionar(atual);
+
+		} catch (EntidadeNaoEncontradaException e) {
+
+			throw new NegocioException(e.getMessage(), e);
 
 		}
-
-		return ResponseEntity.notFound().build();
 
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<?> remover(@PathVariable Long id) {
-		
-		try {
+	public void remover(@PathVariable Long id) {
 
-			service.remover(id);
-
-			return ResponseEntity.noContent().build();
-
-		} catch (EntidadeNaoEncontradaException e) {
-
-			return ResponseEntity.notFound().build();
-
-		} catch (EntidadeEmUsoException e) {
-
-			return ResponseEntity.status(HttpStatus.CONFLICT).build();
-
-		}
-		
+		service.remover(id);
 	}
 	
+
 }
