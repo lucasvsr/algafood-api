@@ -1,7 +1,8 @@
 package com.algaworks.algafood.api.exceptionhandler;
 
+import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.regex.Pattern;import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.ServletWebRequest;
@@ -33,7 +35,26 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	
 	private static final String MSG_ERRO_GENERICA_USER_FINAL = "Ocorreu um erro inesperado no sistema. Tente novamente e se o problema"
 			+ " persistir, entre em contato com o administrador do sistema.";
-
+	
+	@Override
+	protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+			HttpHeaders headers, HttpStatus status, WebRequest request) {
+		
+		String mensagem = "Um ou mais campos estão inválidos. Faça o preenchimento correto e tente novamente.";
+		List<Problem.Field> fields = ex.getBindingResult().getFieldErrors()
+									   .stream().map(fieldError -> Problem.Field.builder()
+											   									.name(fieldError.getField())
+											   									.userMessage(fieldError.getDefaultMessage()).build())
+									   .collect(Collectors.toList());
+		
+		Problem problem = createProblemBuilder(status, ProblemType.DADOS_INVALIDOS, 
+											   mensagem, mensagem)
+						  .fields(fields).build();
+		
+		return handleExceptionInternal(ex, problem, headers, status, request);
+		
+	}
+	
 	@ExceptionHandler(Exception.class)
 	protected ResponseEntity<Object> handleGenericException(Exception ex, WebRequest request) {
 		
@@ -43,6 +64,8 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 		
 		Problem problem = createProblemBuilder(status,
 											   ProblemType.ERRO_DE_SISTEMA, detail, null).build();
+		
+		ex.printStackTrace();
 		
 		return handleExceptionInternal(ex, problem, new HttpHeaders(), 
 									   status, request);
