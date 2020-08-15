@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -23,6 +24,7 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import com.algaworks.algafood.core.validation.ValidacaoException;
 import com.algaworks.algafood.domain.exception.CidadeJaCadastradaException;
 import com.algaworks.algafood.domain.exception.CidadeSemEstadoException;
 import com.algaworks.algafood.domain.exception.EntidadeEmUsoException;
@@ -37,6 +39,8 @@ import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 @ControllerAdvice
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	
+	private static final String CAMPOS_INVALIDOS = "Um ou mais campos estão inválidos. Faça o preenchimento correto e tente novamente.";
+
 	private static final String MSG_ERRO_GENERICA_USER_FINAL = "Ocorreu um erro inesperado no sistema. Tente novamente e se o problema"
 			+ " persistir, entre em contato com o administrador do sistema.";
 	
@@ -47,8 +51,20 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
 			HttpHeaders headers, HttpStatus status, WebRequest request) {
 		
-		String mensagem = "Um ou mais campos estão inválidos. Faça o preenchimento correto e tente novamente.";
-		List<Problem.Object> objects = ex.getBindingResult().getAllErrors()
+		String mensagem = CAMPOS_INVALIDOS;
+		List<Problem.Object> objects = getErrors(ex.getBindingResult());
+		
+		Problem problem = createProblemBuilder(status, ProblemType.DADOS_INVALIDOS, 
+											   mensagem, mensagem)
+						  .objects(objects).build();
+		
+		return handleExceptionInternal(ex, problem, headers, status, request);
+		
+	}
+
+	private List<Problem.Object> getErrors(BindingResult bindingResult) {
+		
+		return bindingResult.getAllErrors()
 									   .stream().map(objectError -> {
 										   
 										   String message = source.getMessage(objectError, LocaleContextHolder.getLocale());
@@ -65,12 +81,21 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 											   			 .userMessage(message).build();
 										   })
 									   .collect(Collectors.toList());
+	}
+	
+	@ExceptionHandler(ValidacaoException.class)
+	protected ResponseEntity<Object> handleValidacaoException(ValidacaoException ex, WebRequest request) {
 		
-		Problem problem = createProblemBuilder(status, ProblemType.DADOS_INVALIDOS, 
-											   mensagem, mensagem)
-						  .objects(objects).build();
+		String mensagem = CAMPOS_INVALIDOS;
+		List<Problem.Object> objects = getErrors(ex.getBindingResult());
 		
-		return handleExceptionInternal(ex, problem, headers, status, request);
+		HttpStatus status = HttpStatus.BAD_REQUEST;
+		
+		Problem problem = createProblemBuilder(status, ProblemType.DADOS_INVALIDOS, mensagem, mensagem)
+							.objects(objects)
+							.build();
+		
+		return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
 		
 	}
 	
