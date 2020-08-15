@@ -23,11 +23,11 @@ public class Problem {
 	private String userMessage;
 	@Builder.Default //Toda vez que a classe for instanciada, vai ter o timestamp
 	private LocalDateTime timestamp = LocalDateTime.now();
-	private List<Field> fields;
+	private List<Object> objects;
 	
 	@Getter
 	@Builder
-	public static class Field {
+	public static class Object {
 		
 		private String name;
 		private String userMessage;
